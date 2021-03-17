@@ -29,11 +29,9 @@ namespace API.Controllers
             return Ok(await Mediator.Send(new Create.Command {Activity = activity}));
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> EditActivity(Guid id, Activity activity)
+        [HttpPut]
+        public async Task<IActionResult> EditActivity(Activity activity)
         {
-            //Assign Id to the activity object. Otherwise we need to create two properties on edit's command class. 
-            activity.Id = id;
             return Ok(await Mediator.Send(new Edit.Command {Activity = activity}));
         }
 
