@@ -1,14 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Grid } from 'semantic-ui-react';
 import ActivityList from './ActivityList';
-import ActivityDetails from '../details/ActivityDetails';
-import ActivityForm from '../form/ActivityForm';
 import { useStore } from '../../../app/stores/store';
 import { observer } from 'mobx-react-lite';
+import LoadingComponent from '../../../app/layout/LoadingComponent';
 
 export default observer(function ActivityDashboard() {
+    /*Custom hook that was created on store file*/
     const {activityStore} = useStore();
-    const {selectedActivity, editMode} = activityStore;
+    const {loadActivities, activityRegistry} = activityStore;
+
+    useEffect(() => {
+        /*Only call API if activities are not in memory */
+        if (activityRegistry.size <= 1) loadActivities();     
+    }, [activityStore])
+
+    /*Loading screen*/
+    if(activityStore.loadingInitial) return <LoadingComponent content='Loading app'></LoadingComponent>
 
     return (
         <Grid>
@@ -16,13 +24,8 @@ export default observer(function ActivityDashboard() {
                 <ActivityList></ActivityList>
             </Grid.Column>
             <Grid.Column width='6'>
-                {/*Only if selected activity exists and not on edit mode*/}
-                {selectedActivity && !editMode &&
-                <ActivityDetails></ActivityDetails>}
-                {/*Only if editMode is true*/}
-                {editMode &&
-                <ActivityForm ></ActivityForm>}
+                <h2>Activity filters</h2>
             </Grid.Column>
         </Grid>
-    )
+    );
 })
