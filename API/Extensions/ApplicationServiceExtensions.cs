@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using Persistence;
+using FluentValidation.AspNetCore;
 
 namespace API.Extensions
 {
@@ -15,7 +16,12 @@ namespace API.Extensions
         {
             //Extension method to maintain Startup class tidy.
 
-            services.AddControllers();
+            //Validating fields in models.
+            services.AddControllers().AddFluentValidation(config => 
+            {
+                //Specifying the class that contains the rules.
+                config.RegisterValidatorsFromAssemblyContaining<Create>();
+            });
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });

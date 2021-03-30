@@ -1,5 +1,8 @@
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
+import { toast } from 'react-toastify';
+import { history } from '../..';
 import { Activity } from '../models/activity';
+import { store } from '../stores/store';
 
 const sleep = (delay: number) => {
     return new Promise((resolve) => {
@@ -9,15 +12,49 @@ const sleep = (delay: number) => {
 
 axios.defaults.baseURL = 'http://localhost:5000/api';
 
-/*All responses will have a delay of 1s*/
 axios.interceptors.response.use(async response => {
-    try {
-        await sleep(1000);
-        return response;
-    } catch (error) {
-        console.log(error);
-        return await Promise.reject(error);
+    /*All responses will have a delay of 1s*/
+    await sleep(1000);
+    return response;
+}, (error: AxiosError) => {
+    const {data, status, config} = error.response!;
+    /*Create toast */
+    switch(status) {
+        case 400:
+            if (typeof data === 'string') {
+                toast.error(data);
+            }
+            if (config.method === 'get' && data.errors.hasOwnProperty('id')) {
+                history.push('/not-found');
+            }
+            /*Errors are many and they come inside an array */
+            if (data.errors) {
+                const modalStateErrors = [];
+                for (const key in data.errors) {
+                    if (data.errors[key]) {
+                        modalStateErrors.push(data.errors[key]);
+                    }
+                }
+                
+                /*Send back to component */
+                /*Transform final array to pure string */
+                throw modalStateErrors.flat();
+            }
+            break;
+        case 401:
+            toast.error('unauthorised');
+            break;
+        case 404:
+            history.push('/not-found');
+            break;
+        case 500:
+            /*Add data to property inside server error */
+            /*This will make all components listening to the change of this property to re render */
+            store.commonStore.setServerError(data);
+            history.push('/server-error');
+            break;
     }
+    return Promise.reject(error);
 })
 
 const responseBody = <T> (response: AxiosResponse<T>) => response.data;

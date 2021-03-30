@@ -23,7 +23,9 @@ namespace API
             var services = scope.ServiceProvider;
 
             try{
+                //Using context already created as a service on StartUp.
                 var context = services.GetRequiredService<DataContext>();
+                //Add testing data to DB.
                 await context.Database.MigrateAsync();
                 await Seed.SeedData(context);
             }
