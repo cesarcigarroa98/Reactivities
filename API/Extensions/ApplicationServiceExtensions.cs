@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using Persistence;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 
 namespace API.Extensions
 {
@@ -17,7 +19,13 @@ namespace API.Extensions
             //Extension method to maintain Startup class tidy.
 
             //Validating fields in models.
-            services.AddControllers().AddFluentValidation(config => 
+            services.AddControllers(opt => 
+            {
+                //Ensuring that every single endpoint in API requires authentication
+                var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+                opt.Filters.Add(new AuthorizeFilter(policy));
+            })
+            .AddFluentValidation(config => 
             {
                 //Specifying the class that contains the rules.
                 config.RegisterValidatorsFromAssemblyContaining<Create>();
