@@ -53,13 +53,15 @@ namespace API.Controllers
             //Verify if new user's email already exists
             if (await _userManager.Users.AnyAsync(x => x.Email == registerDto.Email))
             {
-                return BadRequest("Email taken");
+                ModelState.AddModelError("email", "Email taken");
+                return ValidationProblem();
             }
 
             //Verify if new username's already exists
             if (await _userManager.Users.AnyAsync(x => x.UserName == registerDto.Username))
             {
-                return BadRequest("Username taken");
+                ModelState.AddModelError("username", "Username taken");
+                return ValidationProblem();
             }
 
             //Create new user object
@@ -99,7 +101,7 @@ namespace API.Controllers
         {
             return new UserDto 
             {
-                DisplayName = user.DisplayName,
+                Displayname = user.DisplayName,
                 Image = null,
                 Token = _tokenService.CreateToken(user),
                 Username = user.UserName
