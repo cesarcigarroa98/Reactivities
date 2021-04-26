@@ -109,10 +109,10 @@ export default class ActivityStore {
         }
     }
 
-    updateActivity = async (activity: Activity) => {
+    updateActivity = async (id: string, activity: Activity) => {
         this.loading = true;
         try {
-            await agent.Activities.update(activity);
+            await agent.Activities.update(id, activity);
             runInAction(() => {
                 this.activityRegistry.set(activity.id, activity);
                 this.selectedActivity = activity;

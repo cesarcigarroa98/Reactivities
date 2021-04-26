@@ -1,7 +1,9 @@
 using System.Text;
 using API.Services;
 using Domain;
+using Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,6 +42,15 @@ namespace API.Extensions
                         ValidateAudience = false
                     };
                 });
+            //This policy is used as an attribute on Activities controller
+            services.AddAuthorization(opt => 
+            {
+                opt.AddPolicy("IsActivityHost", policy => {
+                    policy.Requirements.Add(new IsHostRequirement());
+                });
+            });
+            //Object is created in every new request
+            services.AddTransient<IAuthorizationHandler, IsHostRequirementHandler>();
             //Inject TokenService class.
             services.AddScoped<TokenService>();
 

@@ -9,6 +9,8 @@ using Persistence;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Application.Interfaces;
+using Infrastructure.Security;
 
 namespace API.Extensions
 {
@@ -49,6 +51,8 @@ namespace API.Extensions
             services.AddMediatR(typeof(List.Handler).Assembly);
             //AddAutoMapper allows to map properties from one object to another.
             services.AddAutoMapper(typeof(MappingProfiles).Assembly);
+            //Object created once per scoped request
+            services.AddScoped<IUserAccessor, UserAccessor>();
 
             return services;
         }

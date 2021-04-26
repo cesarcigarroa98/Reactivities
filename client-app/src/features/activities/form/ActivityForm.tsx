@@ -57,7 +57,7 @@ export default observer(function ActivityForm () {
             createActivity(newActivity).then(() => history.push(`/activities/${newActivity.id}`))
         } else {
             /*Redirect to activity details just after updating activity */
-            updateActivity(activity).then(() => history.push(`/activities/${activity.id}`))
+            updateActivity(activity.id, activity).then(() => history.push(`/activities/${activity.id}`))
         }
     }
 
