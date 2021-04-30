@@ -14,7 +14,7 @@ export default observer(function ActivityDashboard() {
     useEffect(() => {
         /*Only call API if activities are not in memory */
         if (activityRegistry.size <= 1) loadActivities();     
-    }, [activityStore])
+    }, [activityStore, loadActivities, activityRegistry.size])
 
     /*Loading screen*/
     if(activityStore.loadingInitial) return <LoadingComponent content='Loading activities...'></LoadingComponent>

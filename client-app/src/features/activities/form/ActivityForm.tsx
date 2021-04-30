@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 import {Segment, Button, Header} from 'semantic-ui-react';
 import LoadingComponent from '../../../app/layout/LoadingComponent';
-import { Activity } from '../../../app/models/activity';
+import { ActivityFormValues } from '../../../app/models/activity';
 import { useStore } from '../../../app/stores/store';
 import { Link } from 'react-router-dom';
 import { Formik, Form} from 'formik';
@@ -19,19 +19,11 @@ export default observer(function ActivityForm () {
     /*React hook that has redirection method*/
     const history = useHistory();
     const {activityStore} = useStore();
-    const {createActivity, updateActivity, loading, loadActivity, loadingInitial} = activityStore;
+    const {createActivity, updateActivity, loadActivity, loadingInitial} = activityStore;
     /*Receive parameter from URL */
     const {id} = useParams<{id: string}>();
 
-    const [activity, setActivity] = useState<Activity>({
-        id: '',
-        title: '',
-        category: '',
-        description: '',
-        date: null,
-        city: '',
-        venue: ''
-    });
+    const [activity, setActivity] = useState<ActivityFormValues>(new ActivityFormValues());
 
     const validationSchema = Yup.object({
         title: Yup.string().required('The activity title is required'),
@@ -43,11 +35,11 @@ export default observer(function ActivityForm () {
     })
 
     useEffect(() => {
-        if (id) loadActivity(id).then(activity => setActivity(activity!));
+        if (id) loadActivity(id).then(activity => setActivity(new ActivityFormValues(activity)));
     }, [id, loadActivity])
 
-    function handleFormSubmit(activity: Activity){
-        if(activity.id.length === 0) {
+    function handleFormSubmit(activity: ActivityFormValues){
+        if(!activity.id) {
             let newActivity = {
                 ...activity,
                 /*We create new activity id on this component in order to render activity details as soon as activity is created*/
@@ -88,7 +80,7 @@ export default observer(function ActivityForm () {
                         <MyTextInput placeholder='Venue' name='venue'/>
                         <Button 
                             disabled={isSubmitting || !dirty || !isValid}
-                            loading={loading} 
+                            loading={isSubmitting} 
                             floated='right' 
                             positive type='submit' 
                             content='Submit'>
