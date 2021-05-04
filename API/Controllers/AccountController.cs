@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using API.DTOs;
@@ -31,7 +32,8 @@ namespace API.Controllers
         public async Task<ActionResult<UserDto>> Login (LoginDto loginDto)
         {
             //Find user by email
-            var user = await _userManager.FindByEmailAsync(loginDto.Email);
+            var user = await _userManager.Users.Include(p => p.Photos)
+                .FirstOrDefaultAsync(x => x.Email == loginDto.Email);
 
             if (user == null) return Unauthorized();
 
@@ -90,9 +92,10 @@ namespace API.Controllers
         {
             //Finds current loged in user using a token.
 
-            //User is an object that is created when a user uses the app.
+            //User is an object created when someone logs in
             //Claimtypes is used to access properties inside token
-            var user = await _userManager.FindByEmailAsync(User.FindFirstValue(ClaimTypes.Email));
+            var user = await _userManager.Users.Include(p => p.Photos)
+                .FirstOrDefaultAsync(x => x.Email == User.FindFirstValue(ClaimTypes.Email));
 
             return CreateUserObject(user);
         }
@@ -102,7 +105,7 @@ namespace API.Controllers
             return new UserDto 
             {
                 Displayname = user.DisplayName,
-                Image = null,
+                Image = user?.Photos?.FirstOrDefault(x => x.IsMain)?.Url,
                 Token = _tokenService.CreateToken(user),
                 Username = user.UserName
             };

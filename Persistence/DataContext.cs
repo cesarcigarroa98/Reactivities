@@ -14,6 +14,7 @@ namespace Persistence
         //Not necessary to add AppUser because it is done automatically by base class.
         public DbSet<Activity> Activities { get; set; }
         public DbSet<ActivityAttendee> ActivityAttendees {get; set;}
+        public DbSet<Photo> Photos {get; set;}
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
