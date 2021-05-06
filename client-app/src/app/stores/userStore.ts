@@ -59,4 +59,9 @@ export default class UserStore {
             throw error;
         }
     }
+
+    setImage = (image: string) => {
+        //Change image shown on nav bar
+        if (this.user) this.user.image = image;
+    }
 }
