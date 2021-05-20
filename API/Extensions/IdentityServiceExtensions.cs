@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.Tasks;
 using API.Services;
 using Domain;
 using Infrastructure.Security;
@@ -40,6 +41,22 @@ namespace API.Extensions
                         IssuerSigningKey = key,
                         ValidateIssuer = false,
                         ValidateAudience = false
+                    };
+                    //Save token to be used on ChatHub
+                    opt.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context => 
+                        {
+                            //Receive current token on URL
+                            var accessToken = context.Request.Query["access_token"];
+                            //Get current URL
+                            var path = context.HttpContext.Request.Path;
+                            if (!string.IsNullOrEmpty(accessToken) && (path.StartsWithSegments("/chat")))
+                            {
+                                context.Token = accessToken;
+                            }
+                            return Task.CompletedTask;
+                        }
                     };
                 });
             //This policy is used as an attribute on Activities controller

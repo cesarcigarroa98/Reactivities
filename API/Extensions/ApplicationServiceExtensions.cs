@@ -45,7 +45,11 @@ namespace API.Extensions
             //AddCors allows the API to be consumed from different domains.
             services.AddCors(opt => {
                 opt.AddPolicy("CorsPolicy", policy => {
-                    policy.AllowAnyMethod().AllowAnyHeader().WithOrigins("http://localhost:3000");
+                    policy
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials()
+                        .WithOrigins("http://localhost:3000");
                 });
             });
             //AddMediatR allows to use CQRS pattern.
@@ -57,6 +61,7 @@ namespace API.Extensions
             services.AddScoped<IPhotoAccessor, PhotoAccessor>();
             //Bind values from appsettings.json.Cloudinary to CloudinarySettings class and add to DPI container
             services.Configure<CloudinarySettings>(config.GetSection("Cloudinary"));
+            services.AddSignalR();
 
             return services;
         }
