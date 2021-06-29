@@ -44,10 +44,44 @@ namespace API
             //Custom middleware.
             app.UseMiddleware<ExceptionMiddleware>();
 
+            //Add security parameters to header to get an A on securityheaders.com site
+            app.UseXContentTypeOptions();
+            //Browser do not send any referrer information
+            app.UseReferrerPolicy(opt => opt.NoReferrer());
+            //Cross site scripting protection
+            app.UseXXssProtection(opt => opt.EnabledWithBlockMode());
+            //Prevent to use application on an iframe somewhere else
+            app.UseXfo(opt => opt.Deny());
+            //CSP = content security policy
+            //UseCspReportOnly allows to see the different errors on dev tools from browser
+            //UseCsp blocks everything that is wrong 
+            app.UseCsp(opt => opt 
+                //Only allow https
+                .BlockAllMixedContent()
+                //Allow only from domain
+                .StyleSources(s => s.Self().CustomSources("https://fonts.googleapis.com"))
+                .FontSources(s => s.Self().CustomSources("https://fonts.gstatic.com", "data:"))
+                .FormActions(s => s.Self())
+                .FrameAncestors(s => s.Self())
+                .ImageSources(s => s.Self().CustomSources("https//res.cloudinary.com"))
+                .ScriptSources(s => s.Self().CustomSources("sha256-6ys35OdahF1VX2f8hEC+bVxe16U7OAggF5DcAdCzIwM="))
+            );
+
             if (env.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1"));
+            }
+            else 
+            {
+                //Create a middleware to add property to http header
+                //max-age=one yeay
+                app.Use(async (context, next) => 
+                {
+                    context.Response.Headers.Add("Strict-Transport-Security", "max-age=31536000");
+                    //Call nex piece of middleware
+                    await next.Invoke();
+                });
             }
 
             //app.UseHttpsRedirection();
