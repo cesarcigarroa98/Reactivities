@@ -54,6 +54,12 @@ namespace API
 
             app.UseRouting();
 
+            //Support for serving static files
+            //useDefaultFiles is going to look for anything inside wwwroot folder that is called index.html
+            app.UseDefaultFiles();
+            //Serve static files from wwwroot folder
+            app.UseStaticFiles();
+
             app.UseCors("CorsPolicy");
 
             //First authenticate before authorize.
@@ -65,6 +71,7 @@ namespace API
             {
                 endpoints.MapControllers();
                 endpoints.MapHub<ChatHub>("/chat");
+                endpoints.MapFallbackToController("Index", "Fallback");
             });
         }
     }

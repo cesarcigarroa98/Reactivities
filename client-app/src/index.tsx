@@ -12,6 +12,7 @@ import reportWebVitals from './reportWebVitals';
 import { store, StoreContext } from './app/stores/store';
 import { Router } from 'react-router-dom';
 import {createBrowserHistory} from 'history'
+import ScrollToTop from './app/layout/ScrollToTop';
 
 /*Created here in order to use it in other files that are not react components */
 /*This object is the one that redirects to different URLs */
@@ -20,6 +21,7 @@ export const history = createBrowserHistory();
 ReactDOM.render(
   <StoreContext.Provider value={store}>
     <Router history={history}>
+      <ScrollToTop />
       <App />
     </Router>
   </StoreContext.Provider>,
