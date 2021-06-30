@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using API.DTOs;
@@ -8,6 +10,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 
 namespace API.Controllers
 {
@@ -21,15 +25,25 @@ namespace API.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly TokenService _tokenService;
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, TokenService tokenService)
+        private readonly IConfiguration _config;
+        private readonly HttpClient _httpClient;
+        public AccountController(UserManager<AppUser> userManager,
+            SignInManager<AppUser> signInManager, TokenService tokenService, 
+            IConfiguration config)
         {
+            _config = config;
             _tokenService = tokenService;
             _signInManager = signInManager;
             _userManager = userManager;
+            //To verify the token and get user info
+            _httpClient = new HttpClient
+            {
+                BaseAddress = new System.Uri("https://graph.facebook.com")
+            };
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<UserDto>> Login (LoginDto loginDto)
+        public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
         {
             //Find user by email
             var user = await _userManager.Users.Include(p => p.Photos)
@@ -50,7 +64,7 @@ namespace API.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<UserDto>> Register (RegisterDto registerDto)
+        public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
         {
             //Verify if new user's email already exists
             if (await _userManager.Users.AnyAsync(x => x.Email == registerDto.Email))
@@ -73,7 +87,7 @@ namespace API.Controllers
                 Email = registerDto.Email,
                 UserName = registerDto.Username
             };
-            
+
             //Add user to DB
             var result = await _userManager.CreateAsync(user, registerDto.Password);
 
@@ -88,7 +102,7 @@ namespace API.Controllers
         //This means that token is needed
         [Authorize]
         [HttpGet]
-        public async Task<ActionResult<UserDto>> GetCurrentUser ()
+        public async Task<ActionResult<UserDto>> GetCurrentUser()
         {
             //Finds current loged in user using a token.
 
@@ -100,9 +114,66 @@ namespace API.Controllers
             return CreateUserObject(user);
         }
 
-        private UserDto CreateUserObject (AppUser user)
+        [HttpPost("fbLogin")]
+        public async Task<ActionResult<UserDto>> FacebookLogin(string accessToken)
         {
-            return new UserDto 
+            var fbVerifyKeys = _config["Facebook:AppId"] + "|" + _config["Facebook:AppSecret"];
+
+            //Verify token 
+            var verifyToken = await _httpClient
+                .GetAsync($"debug_token?input_token={accessToken}&access_token={fbVerifyKeys}");
+            
+            if (!verifyToken.IsSuccessStatusCode) return Unauthorized();
+
+            //Create url to get info from user
+            var fbUrl = $"me?access_token={accessToken}&fields=name,email,picture.width(100).height(100)";
+
+            //Request info
+            var response = await _httpClient.GetAsync(fbUrl);
+
+            if (!response.IsSuccessStatusCode) return Unauthorized();
+
+            //Convert to string
+            var content = await response.Content.ReadAsStringAsync();
+            
+            //Dynamic object
+            var fbInfo = JsonConvert.DeserializeObject<dynamic>(content);
+
+            var username = (string)fbInfo.id;
+
+            //Verify if user already exists
+            var user = await _userManager.Users.Include(p => p.Photos)
+                .FirstOrDefaultAsync(x => x.UserName == username);
+
+            if (user != null ) return CreateUserObject(user);
+            
+            //Create new user
+            user = new AppUser
+            {
+                DisplayName = (string)fbInfo.name,
+                Email = (string)fbInfo.email,
+                UserName = (string)fbInfo.id,
+                Photos = new List<Photo>
+                {
+                    new Photo
+                    {
+                        Id = "fb_" + (string)fbInfo.id, 
+                        Url = (string)fbInfo.picture.data.url, 
+                        IsMain = true
+                    }
+                }
+            };
+
+            var result =  await _userManager.CreateAsync(user);
+
+            if (!result.Succeeded) return BadRequest("Problem creating user account");
+
+            return CreateUserObject(user);
+        }
+
+        private UserDto CreateUserObject(AppUser user)
+        {
+            return new UserDto
             {
                 Displayname = user.DisplayName,
                 Image = user?.Photos?.FirstOrDefault(x => x.IsMain)?.Url,

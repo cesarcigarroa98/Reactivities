@@ -59,12 +59,21 @@ namespace API
                 //Only allow https
                 .BlockAllMixedContent()
                 //Allow only from domain
-                .StyleSources(s => s.Self().CustomSources("https://fonts.googleapis.com"))
+                .StyleSources(s => s.Self().CustomSources(
+                    "https://fonts.googleapis.com",
+                    "sha256-oFySg82XYSNiSd+Q3yfYPD/rxY6RMDMJ0KxzGG74iGM="))
                 .FontSources(s => s.Self().CustomSources("https://fonts.gstatic.com", "data:"))
                 .FormActions(s => s.Self())
                 .FrameAncestors(s => s.Self())
-                .ImageSources(s => s.Self().CustomSources("https//res.cloudinary.com"))
-                .ScriptSources(s => s.Self().CustomSources("sha256-6ys35OdahF1VX2f8hEC+bVxe16U7OAggF5DcAdCzIwM="))
+                .ImageSources(s => s.Self().CustomSources(
+                    "https://res.cloudinary.com",
+                    "https://www.facebook.com", 
+                    "https://platform-lookaside.fbsbx.com",
+                    "data:"))
+                .ScriptSources(s => s.Self().CustomSources(
+                    "https://connect.facebook.net",
+                    "sha256-6ys35OdahF1VX2f8hEC+bVxe16U7OAggF5DcAdCzIwM=",
+                    "sha256-kIuEblNZzEFSHFFcDOzpUPmorzGWJ8B7hwGDK8ilFFk="))
             );
 
             if (env.IsDevelopment())
